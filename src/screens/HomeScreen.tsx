@@ -7,6 +7,11 @@ import HeroCarousel from '../components/HeroCarousel';
 import CategoryChips, { Category } from '../components/CategoryChips';
 import CarCard, { Car } from '../components/CarCard';
 import FloatingFooter, { TabKey } from '../components/FloatingFooter';
+import {
+  createStaticNavigation,
+  useNavigation,
+} from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 const hero = [
   { id: '1', src: require('../assets/img/home1.png') },
@@ -47,8 +52,11 @@ const cars: Car[] = [
 
 const FOOTER_SPACE = 110;
 
-export default function HomeScreen({ navigation }: any) {
+export default function HomeScreen() {
+  const navigation = useNavigation();
+
   const onTabPress = (key: TabKey) => {
+      // navigation.navigate('Catalog')
     // if (key === 'Catalog') navigation?.navigate?.('Catalog');
     // if (key === 'Profile') navigation?.navigate?.('Profile');
   };
@@ -76,7 +84,6 @@ export default function HomeScreen({ navigation }: any) {
           contentContainerStyle={{ paddingBottom: FOOTER_SPACE }}
           showsVerticalScrollIndicator={false}
         />
-        <FloatingFooter active="Home" onPress={onTabPress} />
       </View>
     </SafeAreaView>
   );
