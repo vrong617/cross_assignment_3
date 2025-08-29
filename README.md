@@ -1,3 +1,9 @@
+# Home Screen
+<img width="543" height="1089" alt="image" src="https://github.com/user-attachments/assets/bfb32325-5a36-407e-9b7e-8c2a19355324" />
+# Welcome Screen
+<img width="558" height="1034" alt="image" src="https://github.com/user-attachments/assets/df0df372-6380-44ee-a848-57de9180a5c4" />
+
+
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 # Getting Started
