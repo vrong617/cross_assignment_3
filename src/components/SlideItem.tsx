@@ -9,7 +9,7 @@ export type SlideItemProps = {
   subtitle: string;
   ctaText?: string;
   onPress?: () => void;
-  index: number;        // для пейджера зовні, якщо треба
+  index: number;
 };
 
 export default function SlideItem({ image, title, subtitle, ctaText, onPress }: SlideItemProps) {
@@ -45,18 +45,18 @@ const styles = StyleSheet.create({
   hero: { width: '100%' },
   card: {
     position: 'absolute', left: 0, right: 0, bottom: 0,
-    backgroundColor: COLORS.dark, borderRadius: METRICS.radius.lg,
+    backgroundColor: COLORS.bg, borderRadius: METRICS.radius.lg,
     paddingTop: METRICS.spacing.xl, paddingBottom: METRICS.spacing.lg, paddingHorizontal: METRICS.spacing.lg,
     gap: 16,
   },
   h1: {
-    color: COLORS.textOnDark, fontSize: 38, lineHeight: 36, fontWeight: '800',
+    color: COLORS.text, fontSize: 38, lineHeight: 36, fontWeight: '800',
     textAlign: 'center', letterSpacing: -0.3,
   },
-  subtitle: { color: COLORS.textOnDark, fontSize: 12, lineHeight: 20, textAlign: 'center', marginTop: 4 },
+  subtitle: { color: COLORS.text, fontSize: 12, lineHeight: 20, textAlign: 'center', marginTop: 4 },
   cta: {
     marginTop: 6, alignSelf: 'center', backgroundColor: COLORS.yellow,
     paddingVertical: 14, paddingHorizontal: 28, borderRadius: METRICS.radius.md, minWidth: 200, alignItems: 'center',
   },
-  ctaText: { color: COLORS.dark, fontSize: 17, fontWeight: '700' },
+  ctaText: { color: COLORS.bg, fontSize: 17, fontWeight: '700' },
 });

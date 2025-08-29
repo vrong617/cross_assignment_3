@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
   title: { color: COLORS.text, fontSize: 22, fontWeight: '800' },
   action: {
     width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.itemBg,
   },
-  actionText: { color: COLORS.text, fontSize: 18, fontWeight: '700' },
+  actionText: { color: COLORS.text, fontSize: 30, fontWeight: '700' },
 });

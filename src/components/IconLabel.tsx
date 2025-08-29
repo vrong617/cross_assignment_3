@@ -16,5 +16,5 @@ export default function IconLabel({ icon, text }: Props) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   ic: { color: COLORS.text, fontSize: 14 },
-  tx: { color: COLORS.text, opacity: 0.85, fontSize: 14 },
+  tx: { color: COLORS.text, opacity: 0.9, fontSize: 14 },
 });
