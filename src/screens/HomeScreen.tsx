@@ -6,6 +6,7 @@ import AppHeader from '../components/AppHeader';
 import HeroCarousel from '../components/HeroCarousel';
 import CategoryChips, { Category } from '../components/CategoryChips';
 import CarCard, { Car } from '../components/CarCard';
+import FloatingFooter, { TabKey } from '../components/FloatingFooter';
 
 const hero = [
   { id: '1', src: require('../assets/img/home1.png') },
@@ -44,27 +45,39 @@ const cars: Car[] = [
   },
 ];
 
-export default function HomeScreen() {
+const FOOTER_SPACE = 110;
+
+export default function HomeScreen({ navigation }: any) {
+  const onTabPress = (key: TabKey) => {
+    // if (key === 'Catalog') navigation?.navigate?.('Catalog');
+    // if (key === 'Profile') navigation?.navigate?.('Profile');
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" />
-      <FlatList
-        style={styles.list}
-        ListHeaderComponent={
-          <View>
-            <AppHeader title="Turnkey car from America" />
-            <View style={{ paddingHorizontal: METRICS.spacing.lg }}>
-              <HeroCarousel items={hero} />
+      <View style={{ flex: 1 }}>
+        <FlatList
+          style={styles.list}
+          ListHeaderComponent={
+            <View>
+              <AppHeader title="Turnkey car from America" />
+              <View style={{ paddingHorizontal: METRICS.spacing.lg }}>
+                <HeroCarousel items={hero} />
+              </View>
+              <CategoryChips items={categories} onPress={(id) => {  }} />
             </View>
-            <CategoryChips items={categories} onPress={(id) => { /* filter by id */ }} />
-          </View>
-        }
-        data={cars}
-        keyExtractor={(i) => i.id}
-        renderItem={({ item }) => <CarCard item={item} onPress={(id) => { /* open details */ }} />}
-        contentContainerStyle={{ paddingBottom: 24 }}
-        showsVerticalScrollIndicator={false}
-      />
+          }
+          data={cars}
+          keyExtractor={(i) => i.id}
+          renderItem={({ item }) => (
+            <CarCard item={item} onPress={(id) => {  }} />
+          )}
+          contentContainerStyle={{ paddingBottom: FOOTER_SPACE }}
+          showsVerticalScrollIndicator={false}
+        />
+        <FloatingFooter active="Home" onPress={onTabPress} />
+      </View>
     </SafeAreaView>
   );
 }
