@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/colors';
+import AppHeader from '../components/AppHeader';
 
 const TABBAR_H = 90;
 
@@ -12,12 +13,11 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.root}>
+      <AppHeader title="Profile" showBack />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Profile</Text>
-
         <View style={styles.card}>
           <View style={styles.avatar}>
             <Text style={styles.avatarEmoji}>👤</Text>

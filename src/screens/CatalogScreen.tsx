@@ -1,4 +1,3 @@
-// src/screens/CatalogScreen.tsx
 import React, { useMemo, useState, useCallback } from 'react';
 import {
   View,
@@ -7,12 +6,16 @@ import {
   TextInput,
   Pressable,
   FlatList,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
 import CarCard, { Car } from '../components/CarCard';
 import { COLORS } from '../constants/colors';
 import { METRICS } from '../constants/metrics';
+import AppHeader from '../components/AppHeader';
+import { RootStackParamList } from '../../App';
 
 const FOOTER_SPACE = 100;
 
@@ -50,6 +53,7 @@ const DATA: Car[] = [
 ];
 
 export default function CatalogScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [q, setQ] = useState('Volkswagen');
 
   const items = useMemo(() => {
@@ -58,11 +62,18 @@ export default function CatalogScreen() {
   }, [q]);
 
   const onCardPress = useCallback((id: string) => {
-    Alert.alert('Coming soon', `Open car details: ${id}`);
-  }, []);
+    const car = items.find(i => i.id === id);
+    if (!car) return;
+    navigation.navigate('CarDetails', { car });
+  }, [items, navigation]);
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
+      <AppHeader
+        title="All cars"
+        showBack
+        onActionPress={() => {}}
+      />
       <FlatList
         data={items}
         keyExtractor={(i) => i.id}

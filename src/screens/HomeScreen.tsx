@@ -6,12 +6,9 @@ import AppHeader from '../components/AppHeader';
 import HeroCarousel from '../components/HeroCarousel';
 import CategoryChips, { Category } from '../components/CategoryChips';
 import CarCard, { Car } from '../components/CarCard';
-import FloatingFooter, { TabKey } from '../components/FloatingFooter';
-import {
-  createStaticNavigation,
-  useNavigation,
-} from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../App';
 
 const hero = [
   { id: '1', src: require('../assets/img/home1.png') },
@@ -53,13 +50,7 @@ const cars: Car[] = [
 const FOOTER_SPACE = 110;
 
 export default function HomeScreen() {
-  const navigation = useNavigation();
-
-  const onTabPress = (key: TabKey) => {
-      // navigation.navigate('Catalog')
-    // if (key === 'Catalog') navigation?.navigate?.('Catalog');
-    // if (key === 'Profile') navigation?.navigate?.('Profile');
-  };
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -69,17 +60,23 @@ export default function HomeScreen() {
           style={styles.list}
           ListHeaderComponent={
             <View>
-              <AppHeader title="Turnkey car from America" />
+              <AppHeader title="Car from USA" onActionPress={() => {}} />
               <View style={{ paddingHorizontal: METRICS.spacing.lg }}>
                 <HeroCarousel items={hero} />
               </View>
-              <CategoryChips items={categories} onPress={(id) => {  }} />
+              <CategoryChips items={categories} onPress={(id) => {}} />
             </View>
           }
           data={cars}
           keyExtractor={(i) => i.id}
           renderItem={({ item }) => (
-            <CarCard item={item} onPress={(id) => {  }} />
+            <CarCard
+              item={item}
+              onPress={(id) => {
+                const car = cars.find(c => c.id === id);
+                if (car) navigation.navigate('CarDetails', { car });
+              }}
+            />
           )}
           contentContainerStyle={{ paddingBottom: FOOTER_SPACE }}
           showsVerticalScrollIndicator={false}
