@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { COLORS } from '../constants/colors';
 import { METRICS } from '../constants/metrics';
+import { useTheme } from '../theme/ThemeContext';
 
 type Props = {
   title: string;
@@ -21,6 +21,53 @@ export default function AppHeader({
   onActionPress,
 }: Props) {
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
+
+  const styles = React.useMemo(
+    () =>
+      StyleSheet.create({
+        wrap: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: METRICS.spacing.lg,
+          paddingTop: METRICS.spacing.lg,
+          paddingBottom: METRICS.spacing.md,
+          backgroundColor: colors.bg,
+        },
+        title: {
+          flex: 1,
+          color: colors.onSurface,
+          fontSize: 22,
+          fontWeight: '800',
+          textAlign: 'center',
+        },
+        slot: { width: BTN, height: BTN },
+        iconBtn: {
+          width: BTN,
+          height: BTN,
+          borderRadius: BTN / 2,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.surface,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+        },
+        iconText: {
+          color: colors.onSurface,
+          fontSize: 28,
+          fontWeight: '700',
+          lineHeight: 28,
+        },
+        actionText: {
+          color: colors.onSurface,
+          fontSize: 20,
+          fontWeight: '800',
+          lineHeight: 20,
+        },
+      }),
+    [colors]
+  );
+
   const canGoBack = navigation?.canGoBack?.() ?? false;
   const shouldShowBack = showBack === 'auto' ? canGoBack : !!showBack;
 
@@ -46,7 +93,9 @@ export default function AppHeader({
         <View style={styles.slot} />
       )}
 
-      <Text style={styles.title} numberOfLines={1}>{title}</Text>
+      <Text style={styles.title} numberOfLines={1}>
+        {title}
+      </Text>
 
       {onActionPress ? (
         <TouchableOpacity
@@ -64,32 +113,3 @@ export default function AppHeader({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: METRICS.spacing.lg,
-    paddingTop: METRICS.spacing.lg,
-    paddingBottom: METRICS.spacing.md,
-  },
-  title: {
-    flex: 1,
-    color: COLORS.text,
-    fontSize: 22,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  slot: { width: BTN, height: BTN },
-
-  iconBtn: {
-    width: BTN,
-    height: BTN,
-    borderRadius: BTN / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.itemBg,
-  },
-  iconText: { color: COLORS.text, fontSize: 28, fontWeight: '700', lineHeight: 28 },
-  actionText: { color: COLORS.text, fontSize: 20, fontWeight: '800', lineHeight: 20 },
-});

@@ -1,6 +1,12 @@
 import 'react-native-gesture-handler';
 import * as React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { useMemo } from 'react';
+import {
+  NavigationContainer,
+  DefaultTheme as NavDefaultTheme,
+  DarkTheme as NavDarkTheme,
+  Theme as NavTheme,
+} from '@react-navigation/native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -10,6 +16,8 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import CarDetailsScreen, { CarDetailsParams } from './src/screens/CarDetailsScreen';
 
 import FloatingFooter, { TabKey } from './src/components/FloatingFooter';
+
+import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 
 export type RootTabParamList = {
   Home: undefined;
@@ -44,13 +52,39 @@ function Tabs() {
   );
 }
 
-export default function App() {
+function AppInner() {
+  const { theme, colors } = useTheme();
+  const navTheme: NavTheme = useMemo(() => {
+    const base = theme === 'dark' ? NavDarkTheme : NavDefaultTheme;
+    return {
+      ...base,
+      dark: theme === 'dark',
+      colors: {
+        ...base.colors,
+        primary: colors.primary,
+        background: colors.bg,
+        card: colors.surface,
+        text: colors.onSurface,
+        border: colors.border,
+        notification: colors.primary,
+      },
+    };
+  }, [theme, colors]);
+
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Tabs" component={Tabs} />
         <Stack.Screen name="CarDetails" component={CarDetailsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppInner />
+    </ThemeProvider>
   );
 }

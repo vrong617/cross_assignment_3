@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
-import { COLORS } from '../constants/colors';
 import { METRICS } from '../constants/metrics';
 import IconLabel from './IconLabel';
+import { useTheme } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/palette';
 
 export type Car = {
   id: string;
@@ -24,6 +25,9 @@ type Props = {
 const IMG_H = 180;
 
 export default function CarCard({ item, onPress, containerStyle }: Props) {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <TouchableOpacity style={[styles.card, containerStyle]} onPress={() => onPress?.(item.id)}>
       <Image source={item.image} style={styles.img} resizeMode="cover" />
@@ -48,29 +52,30 @@ export default function CarCard({ item, onPress, containerStyle }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.card,
-    borderRadius: METRICS.radius.md,
-    marginHorizontal: METRICS.spacing.lg,
-    marginBottom: METRICS.spacing.md,
-    overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.stroke ?? COLORS.divider,
-  },
-  img: { width: '100%', height: IMG_H },
-  bodyWrap: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.stroke ?? COLORS.divider,
-    backgroundColor: COLORS.card,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    borderBottomLeftRadius: METRICS.radius.md,
-    borderBottomRightRadius: METRICS.radius.md,
-  },
-  body: { padding: METRICS.spacing.md },
-  title: { color: COLORS.text, fontSize: 16, fontWeight: '700', marginBottom: 6 },
-  price: { color: COLORS.yellow, fontSize: 16, fontWeight: '800', marginBottom: 10 },
-  divider: { height: 1, backgroundColor: COLORS.divider, marginVertical: 6, marginBottom: 15 },
-  specs: { flexDirection: 'row', justifyContent: 'space-between' },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: METRICS.radius.md,
+      marginHorizontal: METRICS.spacing.lg,
+      marginBottom: METRICS.spacing.md,
+      overflow: 'hidden',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.border,
+    },
+    img: { width: '100%', height: IMG_H },
+    bodyWrap: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+      borderBottomLeftRadius: METRICS.radius.md,
+      borderBottomRightRadius: METRICS.radius.md,
+    },
+    body: { padding: METRICS.spacing.md },
+    title: { color: c.onSurface, fontSize: 16, fontWeight: '700', marginBottom: 6 },
+    price: { color: c.primary, fontSize: 16, fontWeight: '800', marginBottom: 10 },
+    divider: { height: 1, backgroundColor: c.border, marginVertical: 6, marginBottom: 15 },
+    specs: { flexDirection: 'row', justifyContent: 'space-between' },
+  });
