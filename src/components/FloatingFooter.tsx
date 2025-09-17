@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../theme/palette';
 
-export type TabKey = 'Home' | 'Catalog' | 'Profile';
+export type TabKey = 'Home' | 'Catalog' | 'Favorite' | 'Profile';
 
 type Props = {
   active: TabKey;
@@ -12,6 +12,13 @@ type Props = {
 
 const R = 28;
 
+const emojiMap: Record<TabKey, string> = {
+  Home: '🏠',
+  Catalog: '🚗',
+  Favorite: '❤️',
+  Profile: '👤',
+};
+
 export default function FloatingFooter({ active, onPress }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -19,9 +26,9 @@ export default function FloatingFooter({ active, onPress }: Props) {
   return (
     <View pointerEvents="box-none" style={styles.wrap}>
       <View style={styles.bar}>
-        {(['Home', 'Catalog', 'Profile'] as TabKey[]).map((key) => {
+        {(['Home', 'Catalog', 'Favorite', 'Profile'] as TabKey[]).map((key) => {
           const focused = active === key;
-          const emoji = key === 'Home' ? '🏠' : key === 'Catalog' ? '🚗' : '👤';
+          const emoji = emojiMap[key];
 
           return (
             <Pressable key={key} onPress={() => onPress(key)} style={styles.item}>

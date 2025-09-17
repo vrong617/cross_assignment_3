@@ -9,19 +9,20 @@ import {
 } from '@react-navigation/native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
+import { Provider } from 'react-redux';
+import { store } from './src/store';
 import HomeScreen from './src/screens/HomeScreen';
 import CatalogScreen from './src/screens/CatalogScreen';
+import FavoriteScreen from './src/screens/FavoritesScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import CarDetailsScreen, { CarDetailsParams } from './src/screens/CarDetailsScreen';
-
 import FloatingFooter, { TabKey } from './src/components/FloatingFooter';
-
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 
 export type RootTabParamList = {
   Home: undefined;
   Catalog: undefined;
+  Favorite: undefined;
   Profile: undefined;
 };
 
@@ -46,6 +47,7 @@ function Tabs() {
       tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Favorite" component={FavoriteScreen} />
       <Tab.Screen name="Catalog" component={CatalogScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
@@ -83,8 +85,10 @@ function AppInner() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AppInner />
-    </ThemeProvider>
+    <Provider store={store}>
+      <ThemeProvider>
+        <AppInner />
+      </ThemeProvider>
+    </Provider>
   );
 }

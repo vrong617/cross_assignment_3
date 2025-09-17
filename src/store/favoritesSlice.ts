@@ -1,56 +1,27 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { Car } from '../components/CarCard';
 
-type FavoritesState = {
-  ids: string[];
-  entities: Record<string, Car | undefined>;
-};
+type FavoritesState = { ids: string[] };
 
-const initialState: FavoritesState = {
-  ids: [],
-  entities: {},
-};
+const initialState: FavoritesState = { ids: [] };
 
 const favoritesSlice = createSlice({
   name: 'favorites',
   initialState,
   reducers: {
-    addFavorite(state, action: PayloadAction<Car>) {
-      const car = action.payload;
-      if (!state.entities[car.id]) {
-        state.ids.push(car.id);
-      }
-      state.entities[car.id] = car;
-    },
-    removeFavorite(state, action: PayloadAction<string>) {
+    toggleFavorite(state, action: PayloadAction<string>) {
       const id = action.payload;
-      state.entities[id] = undefined;
-      state.ids = state.ids.filter(x => x !== id);
+      const i = state.ids.indexOf(id);
+      if (i === -1) state.ids.push(id);
+      else state.ids.splice(i, 1);
     },
-    toggleFavorite(state, action: PayloadAction<Car>) {
-      const car = action.payload;
-      if (state.entities[car.id]) {
-        state.entities[car.id] = undefined;
-        state.ids = state.ids.filter(x => x !== car.id);
-      } else {
-        state.entities[car.id] = car;
-        state.ids.push(car.id);
-      }
-    },
-    clearFavorites(state) {
-      state.ids = [];
-      state.entities = {};
+    setFavorite(state, action: PayloadAction<{ id: string; value: boolean }>) {
+      const { id, value } = action.payload;
+      const i = state.ids.indexOf(id);
+      if (value && i === -1) state.ids.push(id);
+      if (!value && i !== -1) state.ids.splice(i, 1);
     },
   },
 });
 
-export const { addFavorite, removeFavorite, toggleFavorite, clearFavorites } = favoritesSlice.actions;
+export const { toggleFavorite, setFavorite } = favoritesSlice.actions;
 export default favoritesSlice.reducer;
-
-export const selectIsFavorite = (state: RootState, id: string) => !!state.favorites.entities[id];
-export const selectFavorites = (state: RootState) =>
-  state.favorites.ids.map(id => state.favorites.entities[id]).filter(Boolean) as Car[];
-
-export type RootState = {
-  favorites: ReturnType<typeof favoritesSlice.reducer>;
-};

@@ -37,7 +37,6 @@ export default function ProfileScreen() {
         {/* Settings list */}
         <View style={styles.list}>
           <Row label="My orders" icon="🧾" onPress={() => go('Orders')} />
-          <Row label="Favorites" icon="❤️" onPress={() => go('Favorites')} />
           <Row label="Settings" icon="⚙️" onPress={() => go('Settings')} />
           <Row label="Help & Support" icon="❓" onPress={() => go('Support')} />
 
