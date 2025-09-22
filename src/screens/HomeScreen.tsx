@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -30,7 +30,6 @@ export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { colors, theme } = useTheme();
   const isDark = theme === 'dark';
-
   const styles = useMemo(() => makeStyles(colors, theme), [colors, theme]);
 
   const [loading, setLoading] = useState(true);
@@ -40,15 +39,14 @@ export default function HomeScreen() {
   const [hero, setHero] = useState<{ id: string; src: any }[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [cars, setCars] = useState<Car[]>([]);
+  const [q, setQ] = useState('');
+  const [searchActive, setSearchActive] = useState(false);
+  const listRef = useRef<FlatList<Car>>(null);
 
   const fetchAll = useCallback(async () => {
     setError(null);
     try {
-      const [h, c, cs] = await Promise.all([
-        Api.getHero(),
-        Api.getCategories(),
-        Api.getCars(),
-      ]);
+      const [h, c, cs] = await Promise.all([Api.getHero(), Api.getCategories(), Api.getCars()]);
       setHero(h);
       setCategories(c);
       setCars(cs);
@@ -74,30 +72,48 @@ export default function HomeScreen() {
 
   const handleCarPress = useCallback(
     (id: string) => {
-      const car = cars.find(c => c.id === id);
+      const car = cars.find((c) => c.id === id);
       if (car) navigation.navigate('CarDetails', { car });
     },
     [cars, navigation]
   );
 
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<Car>) => (
-      <CarCard item={item} onPress={handleCarPress} />
-    ),
+    ({ item }: ListRenderItemInfo<Car>) => <CarCard item={item} onPress={handleCarPress} />,
     [handleCarPress]
   );
-
   const keyExtractor = useCallback((i: Car) => i.id, []);
+  const filteredCars = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return cars;
+    return cars.filter((c) => {
+      const bag = `${c.title} ${c.year} ${c.engine} ${c.transmission}`.toLowerCase();
+      return bag.includes(s);
+    });
+  }, [q, cars]);
 
   const listHeader = useMemo(
     () => (
       <View>
-        <AppHeader title="Car from USA" onActionPress={() => {}} />
-        <View style={{ paddingHorizontal: METRICS.spacing.lg }}>
-          <HeroCarousel items={hero} />
-        </View>
-        <CategoryChips items={categories} onPress={() => {}} />
-        {error && (
+        <AppHeader
+          title="Car from USA"
+          searchable
+          searchPlaceholder="Search cars..."
+          searchValue={q}
+          onSearchChange={setQ}
+          onSearchSubmit={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+          onSearchToggle={setSearchActive}
+        />
+        {!searchActive && (
+          <>
+            <View style={{ paddingHorizontal: METRICS.spacing.lg }}>
+              <HeroCarousel items={hero} />
+            </View>
+            <CategoryChips items={categories} onPress={() => {}} />
+          </>
+        )}
+
+        {error && !searchActive && (
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>{error}</Text>
             <Pressable onPress={fetchAll} style={styles.retryBtn}>
@@ -107,7 +123,7 @@ export default function HomeScreen() {
         )}
       </View>
     ),
-    [hero, categories, error, fetchAll, styles]
+    [q, searchActive, hero, categories, error, fetchAll, styles]
   );
 
   if (loading) {
@@ -127,20 +143,19 @@ export default function HomeScreen() {
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
       <View style={{ flex: 1 }}>
         <FlatList
+          ref={listRef}
           style={styles.list}
-          data={cars}
+          data={filteredCars}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           ListHeaderComponent={listHeader}
           contentContainerStyle={{ paddingBottom: FOOTER_SPACE }}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
           ListEmptyComponent={
             !error ? (
               <View style={styles.empty}>
-                <Text style={styles.muted}>No cars found</Text>
+                <Text style={styles.muted}>{q ? `No cars found for “${q}”` : 'No cars found'}</Text>
               </View>
             ) : null
           }
@@ -156,11 +171,7 @@ const makeStyles = (c: ReturnType<typeof useTheme>['colors'], theme: 'dark' | 'l
     list: { flex: 1 },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
     muted: { color: c.onSurface, opacity: 0.6, marginTop: 8 },
-    empty: {
-      paddingVertical: 40,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
+    empty: { paddingVertical: 40, alignItems: 'center', justifyContent: 'center' },
     errorBox: {
       marginHorizontal: METRICS.spacing.lg,
       marginTop: METRICS.spacing.md,
