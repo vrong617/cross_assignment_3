@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,74 +6,100 @@ import {
   TextInput,
   Pressable,
   FlatList,
+  StatusBar,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import CarCard, { Car } from '../components/CarCard';
-import { COLORS } from '../constants/colors';
 import { METRICS } from '../constants/metrics';
 import AppHeader from '../components/AppHeader';
 import { RootStackParamList } from '../../App';
+import { useTheme } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/palette';
+import { Api } from '../api';
 
 const FOOTER_SPACE = 100;
 
-const DATA: Car[] = [
-  {
-    id: '1',
-    title: 'Volkswagen Tiguan 2020',
-    price: '$29 000',
-    year: '2020',
-    mileage: '24000',
-    engine: 'Gas 2.4',
-    transmission: 'Automat',
-    image: require('../assets/img/home2.png'),
-  },
-  {
-    id: '2',
-    title: 'Volkswagen Tiguan 2020',
-    price: '$29 000',
-    year: '2020',
-    mileage: '24000',
-    engine: 'Бензин 2.4',
-    transmission: 'Automat',
-    image: require('../assets/img/home2.png'),
-  },
-  {
-    id: '3',
-    title: 'Volkswagen Tiguan 2020',
-    price: '$29 000',
-    year: '2020',
-    mileage: '24000',
-    engine: 'Gas 2.4',
-    transmission: 'Automat',
-    image: require('../assets/img/home2.png'),
-  },
-];
-
 export default function CatalogScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [q, setQ] = useState('Volkswagen');
+  const { colors, theme } = useTheme();
+  const isDark = theme === 'dark';
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const [q, setQ] = useState('');
+  const [cars, setCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCars = useCallback(async () => {
+    setError(null);
+    try {
+      const cs = await Api.getCars();
+      setCars(cs);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to load cars');
+    }
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await fetchCars();
+      setLoading(false);
+    })();
+  }, [fetchCars]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchCars();
+    setRefreshing(false);
+  }, [fetchCars]);
 
   const items = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return s ? DATA.filter(i => i.title.toLowerCase().includes(s)) : DATA;
-  }, [q]);
+    return s ? cars.filter(i => i.title.toLowerCase().includes(s)) : cars;
+  }, [q, cars]);
 
-  const onCardPress = useCallback((id: string) => {
-    const car = items.find(i => i.id === id);
-    if (!car) return;
-    navigation.navigate('CarDetails', { car });
-  }, [items, navigation]);
+  const onCardPress = useCallback(
+    (id: string) => {
+      const car = items.find(i => i.id === id);
+      if (!car) return;
+      navigation.navigate('CarDetails', { car });
+    },
+    [items, navigation]
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.root} edges={['top']}>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={{ color: colors.onSurface, opacity: 0.6 }}>Loading…</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
-      <AppHeader
-        title="All cars"
-        showBack
-        onActionPress={() => {}}
-      />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
+      <AppHeader title="All cars" showBack onActionPress={() => {}} />
+
+      {error && (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable onPress={fetchCars} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Retry</Text>
+          </Pressable>
+        </View>
+      )}
+
       <FlatList
         data={items}
         keyExtractor={(i) => i.id}
@@ -86,13 +112,12 @@ export default function CatalogScreen() {
             <Text style={styles.sectionTitle}>Search result</Text>
           </>
         }
-        renderItem={({ item }) => (
-          <CarCard item={item} onPress={onCardPress} />
-        )}
-        ListEmptyComponent={
-          <Text style={styles.empty}>Nothing found</Text>
-        }
+        renderItem={({ item }) => <CarCard item={item} onPress={onCardPress} />}
+        ListEmptyComponent={<Text style={styles.empty}>Nothing found</Text>}
         ListFooterComponent={<View style={{ height: FOOTER_SPACE }} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+        }
       />
     </SafeAreaView>
   );
@@ -107,13 +132,16 @@ function SearchBar({
   onChangeText: (t: string) => void;
   onClear: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={styles.search}>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder="Volkswagen"
-        placeholderTextColor="#9FB3C2"
+        placeholderTextColor={colors.onSurface + '66'}
         style={styles.searchInput}
       />
       {!!value && (
@@ -125,62 +153,83 @@ function SearchBar({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
-  listContent: {
-    paddingTop: METRICS.spacing.lg,
-    paddingBottom: FOOTER_SPACE + METRICS.spacing.lg,
-  },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    root: { flex: 1, backgroundColor: c.bg },
+    listContent: {
+      paddingTop: METRICS.spacing.lg,
+      paddingBottom: FOOTER_SPACE + METRICS.spacing.lg,
+    },
 
-  hint: {
-    color: '#9FB3C2',
-    fontSize: 14,
-    marginHorizontal: METRICS.spacing.lg,
-    marginBottom: METRICS.spacing.sm,
-  },
+    hint: {
+      color: c.onSurface,
+      opacity: 0.6,
+      fontSize: 14,
+      marginHorizontal: METRICS.spacing.lg,
+      marginBottom: METRICS.spacing.sm,
+    },
 
-  search: {
-    position: 'relative',
-    marginHorizontal: METRICS.spacing.lg,
-    marginBottom: METRICS.spacing.md,
-    borderRadius: METRICS.radius.md,
-    backgroundColor: COLORS.card,
-    paddingLeft: METRICS.spacing.md,
-    paddingRight: 44,
-    paddingVertical: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.stroke ?? COLORS.divider,
-  },
-  searchInput: {
-    color: COLORS.text,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  clear: {
-    position: 'absolute',
-    right: 8,
-    top: 8,
-    bottom: 8,
-    width: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-  },
-  clearTx: { color: '#9FB3C2', fontSize: 16 },
+    search: {
+      position: 'relative',
+      marginHorizontal: METRICS.spacing.lg,
+      marginBottom: METRICS.spacing.md,
+      borderRadius: METRICS.radius.md,
+      backgroundColor: c.surface,
+      paddingLeft: METRICS.spacing.md,
+      paddingRight: 44,
+      paddingVertical: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.border,
+    },
+    searchInput: {
+      color: c.onSurface,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    clear: {
+      position: 'absolute',
+      right: 8,
+      top: 8,
+      bottom: 8,
+      width: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 16,
+    },
+    clearTx: { color: c.onSurface, opacity: 0.6, fontSize: 16 },
 
-  sectionTitle: {
-    color: COLORS.text,
-    fontSize: 16,
-    fontWeight: '800',
-    marginHorizontal: METRICS.spacing.lg,
-    marginBottom: METRICS.spacing.sm,
-    marginTop: 4,
-  },
+    sectionTitle: {
+      color: c.onSurface,
+      fontSize: 16,
+      fontWeight: '800',
+      marginHorizontal: METRICS.spacing.lg,
+      marginBottom: METRICS.spacing.sm,
+      marginTop: 4,
+    },
 
-  empty: {
-    color: COLORS.text,
-    opacity: 0.7,
-    textAlign: 'center',
-    marginTop: 32,
-  },
-});
+    empty: {
+      color: c.onSurface,
+      opacity: 0.7,
+      textAlign: 'center',
+      marginTop: 32,
+    },
+    errorBox: {
+      marginHorizontal: METRICS.spacing.lg,
+      marginTop: METRICS.spacing.md,
+      padding: METRICS.spacing.md,
+      borderRadius: 10,
+      backgroundColor: '#fde7e7',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: '#f19999',
+      gap: 8,
+    },
+    errorText: { color: '#8a1a1a' },
+    retryBtn: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+      backgroundColor: '#d9534f',
+    },
+    retryText: { color: '#fff', fontWeight: '600' },
+  });

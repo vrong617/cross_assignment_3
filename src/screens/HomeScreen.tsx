@@ -14,9 +14,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { COLORS } from '../constants/colors';
 import { METRICS } from '../constants/metrics';
-
 import AppHeader from '../components/AppHeader';
 import HeroCarousel from '../components/HeroCarousel';
 import CategoryChips, { Category } from '../components/CategoryChips';
@@ -24,11 +22,16 @@ import CarCard, { Car } from '../components/CarCard';
 
 import { Api } from '../api';
 import { RootStackParamList } from '../../App';
+import { useTheme } from '../theme/ThemeContext';
 
 const FOOTER_SPACE = 110;
 
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { colors, theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  const styles = useMemo(() => makeStyles(colors, theme), [colors, theme]);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -104,15 +107,15 @@ export default function HomeScreen() {
         )}
       </View>
     ),
-    [hero, categories, error, fetchAll]
+    [hero, categories, error, fetchAll, styles]
   );
 
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
         <View style={styles.center}>
-          <ActivityIndicator />
+          <ActivityIndicator color={colors.primary} />
           <Text style={styles.muted}>Loading…</Text>
         </View>
       </SafeAreaView>
@@ -121,7 +124,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
       <View style={{ flex: 1 }}>
         <FlatList
           style={styles.list}
@@ -132,7 +135,7 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingBottom: FOOTER_SPACE }}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             !error ? (
@@ -147,33 +150,34 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.bg },
-  list: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  muted: { color: '#9aa0a6', marginTop: 8 },
-  empty: {
-    paddingVertical: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  errorBox: {
-    marginHorizontal: METRICS.spacing.lg,
-    marginTop: METRICS.spacing.md,
-    padding: METRICS.spacing.md,
-    borderRadius: 10,
-    backgroundColor: '#3b1d1d',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#a94a4a',
-    gap: 8,
-  },
-  errorText: { color: '#ffb4b4' },
-  retryBtn: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#a94a4a',
-  },
-  retryText: { color: 'white', fontWeight: '600' },
-});
+const makeStyles = (c: ReturnType<typeof useTheme>['colors'], theme: 'dark' | 'light') =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: c.bg },
+    list: { flex: 1 },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
+    muted: { color: c.onSurface, opacity: 0.6, marginTop: 8 },
+    empty: {
+      paddingVertical: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    errorBox: {
+      marginHorizontal: METRICS.spacing.lg,
+      marginTop: METRICS.spacing.md,
+      padding: METRICS.spacing.md,
+      borderRadius: 10,
+      backgroundColor: theme === 'dark' ? '#3b1d1d' : '#fde7e7',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme === 'dark' ? '#a94a4a' : '#f19999',
+      gap: 8,
+    },
+    errorText: { color: theme === 'dark' ? '#ffb4b4' : '#8a1a1a' },
+    retryBtn: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+      backgroundColor: theme === 'dark' ? '#a94a4a' : '#d9534f',
+    },
+    retryText: { color: '#fff', fontWeight: '600' },
+  });
