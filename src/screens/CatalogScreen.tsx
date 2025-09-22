@@ -1,9 +1,8 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   Pressable,
   FlatList,
   StatusBar,
@@ -29,6 +28,8 @@ export default function CatalogScreen() {
   const { colors, theme } = useTheme();
   const isDark = theme === 'dark';
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const listRef = useRef<FlatList<Car>>(null);
 
   const [q, setQ] = useState('');
   const [cars, setCars] = useState<Car[]>([]);
@@ -62,12 +63,16 @@ export default function CatalogScreen() {
 
   const items = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return s ? cars.filter(i => i.title.toLowerCase().includes(s)) : cars;
+    if (!s) return cars;
+    return cars.filter((i) => {
+      const bag = `${i.title} ${i.year} ${i.engine} ${i.transmission}`.toLowerCase();
+      return bag.includes(s);
+    });
   }, [q, cars]);
 
   const onCardPress = useCallback(
     (id: string) => {
-      const car = items.find(i => i.id === id);
+      const car = items.find((i) => i.id === id);
       if (!car) return;
       navigation.navigate('CarDetails', { car });
     },
@@ -89,7 +94,15 @@ export default function CatalogScreen() {
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
-      <AppHeader title="All cars" showBack onActionPress={() => {}} />
+      <AppHeader
+        title="All cars"
+        showBack
+        searchable
+        searchPlaceholder="Search cars..."
+        searchValue={q}
+        onSearchChange={setQ}
+        onSearchSubmit={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+      />
 
       {error && (
         <View style={styles.errorBox}>
@@ -101,55 +114,25 @@ export default function CatalogScreen() {
       )}
 
       <FlatList
+        ref={listRef}
         data={items}
         keyExtractor={(i) => i.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
-          <>
-            <Text style={styles.hint}>Search results by product name …</Text>
-            <SearchBar value={q} onChangeText={setQ} onClear={() => setQ('')} />
+          <View>
+            <Text style={styles.hint}>
+              {q ? `Results for “${q}” — ${items.length}` : 'Browse all cars'}
+            </Text>
             <Text style={styles.sectionTitle}>Search result</Text>
-          </>
+          </View>
         }
         renderItem={({ item }) => <CarCard item={item} onPress={onCardPress} />}
-        ListEmptyComponent={<Text style={styles.empty}>Nothing found</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>{q ? 'Nothing found' : 'No cars'}</Text>}
         ListFooterComponent={<View style={{ height: FOOTER_SPACE }} />}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       />
     </SafeAreaView>
-  );
-}
-
-function SearchBar({
-  value,
-  onChangeText,
-  onClear,
-}: {
-  value: string;
-  onChangeText: (t: string) => void;
-  onClear: () => void;
-}) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
-
-  return (
-    <View style={styles.search}>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder="Volkswagen"
-        placeholderTextColor={colors.onSurface + '66'}
-        style={styles.searchInput}
-      />
-      {!!value && (
-        <Pressable onPress={onClear} style={styles.clear}>
-          <Text style={styles.clearTx}>✕</Text>
-        </Pressable>
-      )}
-    </View>
   );
 }
 
@@ -160,7 +143,6 @@ const makeStyles = (c: ThemeColors) =>
       paddingTop: METRICS.spacing.lg,
       paddingBottom: FOOTER_SPACE + METRICS.spacing.lg,
     },
-
     hint: {
       color: c.onSurface,
       opacity: 0.6,
@@ -168,36 +150,6 @@ const makeStyles = (c: ThemeColors) =>
       marginHorizontal: METRICS.spacing.lg,
       marginBottom: METRICS.spacing.sm,
     },
-
-    search: {
-      position: 'relative',
-      marginHorizontal: METRICS.spacing.lg,
-      marginBottom: METRICS.spacing.md,
-      borderRadius: METRICS.radius.md,
-      backgroundColor: c.surface,
-      paddingLeft: METRICS.spacing.md,
-      paddingRight: 44,
-      paddingVertical: 12,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: c.border,
-    },
-    searchInput: {
-      color: c.onSurface,
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    clear: {
-      position: 'absolute',
-      right: 8,
-      top: 8,
-      bottom: 8,
-      width: 32,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: 16,
-    },
-    clearTx: { color: c.onSurface, opacity: 0.6, fontSize: 16 },
-
     sectionTitle: {
       color: c.onSurface,
       fontSize: 16,
@@ -206,7 +158,6 @@ const makeStyles = (c: ThemeColors) =>
       marginBottom: METRICS.spacing.sm,
       marginTop: 4,
     },
-
     empty: {
       color: c.onSurface,
       opacity: 0.7,
