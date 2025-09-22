@@ -1,11 +1,26 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ViewStyle, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  ViewStyle,
+  Pressable,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from 'react-native';
 import { METRICS } from '../constants/metrics';
 import IconLabel from './IconLabel';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../theme/palette';
 import { useAppDispatch, useAppSelector } from '../store';
 import { toggleFavorite } from '../store/favoritesSlice';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export type Car = {
   id: string;
@@ -33,14 +48,30 @@ export default function CarCard({ item, onPress, containerStyle }: Props) {
   const dispatch = useAppDispatch();
   const isFav = useAppSelector((s) => s.favorites.ids.includes(item.id));
 
+  const [pulsed, setPulsed] = React.useState(false);
+
+  const onToggleFav = React.useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setPulsed(true);
+    setTimeout(() => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setPulsed(false);
+    }, 140);
+
+    dispatch(toggleFavorite(item.id));
+  }, [dispatch, item.id]);
+
   return (
-    <TouchableOpacity style={[styles.card, containerStyle]} onPress={() => onPress?.(item.id)} activeOpacity={0.9}>
-      {/* Favorite button overlay */}
+    <TouchableOpacity
+      style={[styles.card, containerStyle]}
+      onPress={() => onPress?.(item.id)}
+      activeOpacity={0.9}
+    >
       <View style={styles.favWrap}>
         <Pressable
-          onPress={() => dispatch(toggleFavorite(item.id))}
+          onPress={onToggleFav}
           hitSlop={8}
-          style={[styles.favBtn, isFav && styles.favBtnActive]}
+          style={[styles.favBtn, isFav && styles.favBtnActive, pulsed && styles.favBtnPulse]}
         >
           <Text style={[styles.favIcon, isFav ? styles.favIconActive : styles.favIconInactive]}>
             {isFav ? '★' : '☆'}
@@ -105,6 +136,7 @@ const makeStyles = (c: ThemeColors) =>
       shadowOffset: { width: 0, height: 2 },
       elevation: 2,
     },
+    favBtnPulse: { width: 42, height: 42, borderRadius: 21 },
     favBtnActive: {
       backgroundColor: c.primary + '22',
       borderColor: c.primary,
@@ -127,4 +159,4 @@ const makeStyles = (c: ThemeColors) =>
     price: { color: c.primary, fontSize: 16, fontWeight: '800', marginBottom: 10 },
     divider: { height: 1, backgroundColor: c.border, marginVertical: 6, marginBottom: 15 },
     specs: { flexDirection: 'row', justifyContent: 'space-between' },
-  });
+});
